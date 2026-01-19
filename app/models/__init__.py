@@ -1,0 +1,1 @@
+from app.models.users import User #without this line, not creating tables, fails migrations, lost hours.
