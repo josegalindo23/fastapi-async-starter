@@ -6,19 +6,22 @@
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 ![Status](https://img.shields.io/badge/Status-In%20Development-orange)
 
-A modern FastAPI backend with async/await, SQLAlchemy 2.0, and modular architecture. 
+A modern FastAPI backend with async/await, SQLAlchemy 2.0, and modular architecture.
+Built as a portfolio project demonstrating production-ready backend patterns.
 
 ## 🚀 Features
 
 - ⚡ **FastAPI** with async/await support
 - 🔄 **SQLAlchemy 2.0** async ORM
-- 📝 **Pydantic v2** Robust Data Validation and Settings Management
-- 🎯 **Clean/Modular architecture** (Routers, Models, Schemas, Services)
-- 🔐 **Password hashing** with bcrypt via Passlib
-- 🗄️ **SQLite database** (easy to switch to PostgreSQL)
+- 📝 **Pydantic v2** robust data validation and settings management
+- 🎯 **Clean/Modular architecture** (Routers, Models, Schemas, Services, Dependencies)
+- 🔐 **JWT Authentication** with access + refresh token rotation
+- 🔑 **Role-based access control** (user, moderator, admin, superuser)
+- 🛡️ **Password security** with bcrypt hashing and strength validation
+- 🗄️ **SQLite** by default, easy to switch to PostgreSQL
 - 📚 **Automatic API documentation** (Swagger UI & ReDoc)
-- ✅ **Type Hints**: Code types for better clarity and error checking  
-- 🔒 **CORS Configuration**: Middleware setup for cross-origin requests, essential for frontend-backend communication
+- ✅ **Type hints** throughout for clarity and safety
+- 🔒 **CORS** middleware configured for frontend integration
 
 ## 📁 Project Structure
 
@@ -26,32 +29,45 @@ A modern FastAPI backend with async/await, SQLAlchemy 2.0, and modular architect
 fastapi-async-starter/
 ├── app/
 │   ├── __init__.py
-│   ├── main.py                 # Application entry point
+│   ├── main.py                     # Application entry point
 │   ├── core/
 │   │   ├── __init__.py
-│   │   └── config.py          # Centralized configuration
+│   │   ├── config.py               # Centralized configuration (pydantic-settings)
+│   │   └── security.py             # JWT creation/verification, bcrypt utils
 │   ├── db/
 │   │   ├── __init__.py
-│   │   ├── base.py            # SQLAlchemy declarative base
-│   │   └── database.py        # DB engine and async sessions
+│   │   ├── base.py                 # SQLAlchemy declarative base + model imports
+│   │   └── database.py             # Async engine, session factory, get_db dependency
+│   ├── dependencies/
+│   │   ├── __init__.py
+│   │   └── auth.py                 # get_current_user, ActiveUser, AdminUser
 │   ├── models/
 │   │   ├── __init__.py
-│   │   └── user.py            # SQLAlchemy models
+│   │   ├── user.py                 # User ORM model
+│   │   └── tokens.py               # RefreshToken ORM model
 │   ├── schemas/
 │   │   ├── __init__.py
-│   │   └── user.py            # Pydantic schemas
+│   │   ├── user.py                 # User Pydantic schemas (create, update, response)
+│   │   └── auth.py                 # Auth schemas (login, token, logout, reset)
 │   ├── services/
 │   │   ├── __init__.py
-│   │   └── user_service.py    # Business Logic
+│   │   ├── user_service.py         # User CRUD business logic
+│   │   └── auth_service.py         # Auth logic (login, refresh, logout, reset)
 │   └── routers/
 │       ├── __init__.py
-│       ├── health.py          # Health check endpoint
-│       └── users.py           # User endpoints 
-├── .env                        # Environment variables (not in git)
-├── .env.example                # Environment template 
+│       ├── health.py               # Health check endpoint
+│       ├── user.py                 # User endpoints
+│       └── auth.py                 # Authentication endpoints
+├── test/
+│   └── test_health.py
+├── dev_scripts/
+├── .venv                            # Virtual Environment (not in git)
+├── .env                            # Environment variables (not in git)
+├── .env.example                    # Environment template
 ├── .gitignore
 ├── requirements.txt
-└── README.md                   # This file
+├── LICENSE
+└── README.md
 ```
 
 ## 🚀 Quick Start
@@ -88,13 +104,21 @@ pip install -r requirements.txt
 ```
 
 4. **Configure environment variables**
- Create a `.env` file in the project root:
+ Create a `.env` file in the project root (Look `.env.example` file):
 
 ```env
 DATABASE_URL=sqlite+aiosqlite:///./test.db
 PROJECT_NAME=FastAPI Async Starter
 DEBUG=True
+
+# Generate a strong key: python -c "import secrets; print(secrets.token_hex(32))"
 SECRET_KEY=your-super-secret-key-change-in-production
+
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
+PASSWORD_RESET_TOKEN_EXPIRE_HOURS=1
+```
 ```
 5. **Run the application**
 
@@ -109,33 +133,70 @@ The application will be available at:
 
 ## 🔧 API Endpoints
 
+### Public
 ```http
-GET    /health/          Health check
-POST   /users/           Create user  
-GET    /users/           List users
-GET    /users/{id}       Get user by ID
+GET    /health/                         Health check
+POST   /users/register                  Create account
+POST   /auth/login                      Login — returns access + refresh tokens
+POST   /auth/refresh                    Rotate refresh token
+POST   /auth/password-reset/request     Request password reset (email)
+POST   /auth/password-reset/confirm     Confirm reset with token + new password
 ```
 
-### Application Layers
+### Protected (requires Bearer token)
+```http
+GET    /auth/me                         Get own profile
+PUT    /users/me/profile                Update username / full name
+PUT    /users/me/password               Change password
+POST   /auth/logout                     Revoke current session
+POST   /auth/logout-all                 Revoke all sessions (all devices)
+```
 
-1. **Routers** (`app/routers/`) - HTTP endpoints and request validation
-2. **Services** (`app/services/`) - Business logic and rules
-3. **Models** (`app/models/`) - Database table definitions
-4. **Schemas** (`app/schemas/`) - Data validation and serialization
+### Admin only
+```http
+GET    /users/                          List all users (paginated)
+GET    /users/{id}                      Get any user by ID
+PUT    /users/{id}                      Update any user
+DELETE /users/{id}                      Deactivate user (soft delete)
+```
 
-### Data Flow
+## 🔐 Authentication Flow
 
+```
+1. POST /users/register  →  create account
+2. POST /auth/login      →  { access_token, refresh_token }
+3. GET  /auth/me         →  Authorization: Bearer <access_token>
+4. POST /auth/refresh    →  send refresh_token → new token pair (rotation)
+5. POST /auth/logout     →  revoke refresh_token
+```
+
+**Token rotation** — every refresh request revokes the old refresh token and issues
+a new one. This prevents replay attacks: a stolen refresh token becomes useless
+as soon as the legitimate client uses it once.
+
+## 🏗️ Architecture
+
+### Layers
 ```
 Request → Router → Service → Model → Database
                       ↓
 Response ← Schema ← Service ← Model ← Database
 ```
 
+### Dependency injection chain
+```
+get_current_user          → validates JWT, loads User from DB
+  └─ get_current_active_user   → also checks is_active
+       └─ get_current_admin_user    → also checks role/superuser
+```
+
 ## 🗄️ Database
+
+SQLite is used for development. Switch to PostgreSQL for production:
 
 ### Migrate to PostgreSQL
 
-1. Install dependencies:
+1. Install driver:
 
 ```bash
 pip install asyncpg psycopg2-binary
@@ -147,9 +208,14 @@ pip install asyncpg psycopg2-binary
 DATABASE_URL=postgresql+asyncpg://user:password@localhost/dbname
 ```
 
+> **Note:** SQLite doesn't store timezone info in DATETIME columns.
+> The codebase handles this explicitly in `RefreshToken.is_expired`
+> by normalizing naive datetimes to UTC before comparison —
+> so the same code works correctly on both SQLite and PostgreSQL.
+
 ### Migrate to MySQL
 
-1. Install dependencies:
+1. Install driver:
 
 ```bash
 pip install aiomysql
@@ -180,19 +246,13 @@ pytest
 | sqlalchemy | 2.0.45 | Async ORM |
 | pydantic | 2.12.5 | Data validation |
 | pydantic-settings | 2.4.0 | Settings management |
+| python-jose[cryptography] | 3.5.0 | JWT encoding/decoding |
 | bcrypt | 4.0.1 | Password hashing |
 | passlib[bcrypt] | 1.7.4 | Password hashing |
+| python-multipart | 0.0.21 | Form data support |
 | aiosqlite | 0.22.1 | Async SQLite driver |
 | email-validator | 2.3.0 | Email validation |
 | python-dotenv | 1.2.1 | Environment variables |
-
-### Environment Variables in Production (Example)
-
-```env
-DATABASE_URL=postgresql+asyncpg://user:pass@host/db
-SECRET_KEY=generate-a-strong-random-key
-DEBUG=False
-```
 
 ## 🗺️ Development Roadmap
 
@@ -203,32 +263,32 @@ DEBUG=False
 - [x] Password hashing with bcrypt
 - [x] Automatic API documentation
 
-### 🚀 Phase 2: Authentication & Security (Current)
-- [ ] JWT authentication endpoints
-- [ ] Protected routes with dependencies
-- [ ] Refresh token mechanism
-- [ ] Password reset functionality
+### ✅ Phase 2: Authentication & Security (Completed)
+- [x] JWT access + refresh token system
+- [x] Refresh token rotation with DB-backed revocation
+- [x] Protected routes with dependency injection
+- [x] Role-based access control (user / moderator / admin / superuser)
+- [x] Logout (single session + all devices)
+- [x] Password reset flow with time-limited tokens
 
-### ⚙️ Phase 3: Production Readiness
+### ⚙️ Phase 3: Production Readiness (Current)
 - [ ] Database migrations with Alembic
 - [ ] Unit and integration tests (pytest)
 - [ ] Docker configuration
-- [ ] Environment-based configuration
-- [ ] Logging and error handling improvements
+- [ ] Structured logging and error handling
 
 ### 🌟 Phase 4: Advanced Features
 - [ ] OAuth2 integration (Google, GitHub)
 - [ ] Rate limiting middleware
 - [ ] Background tasks with Celery/RQ
 - [ ] File upload support
-- [ ] WebSocket implementation for real-time features
+- [ ] WebSocket real-time features
 
 ### 🚢 Phase 5: Deployment & DevOps
 - [ ] CI/CD pipeline with GitHub Actions
 - [ ] Docker Compose for development
 - [ ] Production deployment (Render/Railway/AWS)
 - [ ] Monitoring and health checks
-- [ ] API documentation deployment
 
 ## 🤝 Contributing
 
@@ -242,7 +302,7 @@ Contributions are welcome! Please:
 
 ## 📄 License
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+MIT License. See `LICENSE` for details.
 
 ## 👤 Author
 
@@ -255,8 +315,7 @@ This project is licensed under the MIT License. See the `LICENSE` file for detai
 - [FastAPI](https://fastapi.tiangolo.com/) for the amazing async web framework
 - [SQLAlchemy](https://www.sqlalchemy.org/) for the powerful async ORM
 - [Pydantic](https://docs.pydantic.dev/) for robust data validation
-- The Python community for endless inspiration
 
 ---
 
-⭐ If this project helped you, consider giving it a star on GitHub!
+⭐ If this project helped you, consider giving it a star!
