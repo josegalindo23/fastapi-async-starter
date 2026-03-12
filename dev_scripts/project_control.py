@@ -19,7 +19,7 @@ async def check():
     
     # 2. Verify models
     try:
-        from app.models.users import User
+        from app.models.user import User
         checks.append(("✅ Modelo User", True))
     except Exception as e:
         checks.append((f"❌ Modelo User: {e}", False))

@@ -1,3 +1,9 @@
+"""
+app/routers/health.py
+
+Health check endpoint:
+    GET /health - Simple endpoint to verify API is running
+"""
 from fastapi import APIRouter
 
 router = APIRouter()

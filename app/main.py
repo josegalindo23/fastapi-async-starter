@@ -5,7 +5,9 @@ from contextlib import asynccontextmanager
 from app.db.database import engine
 from app.db.base import Base
 from app.routers.health import router as health_router
-from app.routers.users import router as users_router
+from app.routers.user import router as users_router
+from app.routers.auth import router as auth_router
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -29,3 +31,12 @@ app.add_middleware(
 
 app.include_router(health_router)
 app.include_router(users_router)
+app.include_router(auth_router)
+
+@app.get("/")
+async def root():
+    return {
+        "message": "Starter Async API",
+        "docs": "/docs",
+        "redoc": "/redoc"
+    }

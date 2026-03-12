@@ -1,3 +1,13 @@
+"""
+app/db/database.py
+
+Database connection and session management using SQLAlchemy's async support.
+- Creates an async engine based on the DATABASE_URL from settings
+- Provides an async session factory (AsyncSessionLocal)
+- Defines a dependency function `get_db` that yields an async session for use in FastAPI routes
+- Ensures proper cleanup of sessions after use
+"""
+
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from app.core.config import settings
 #from collections.abc import AsyncGenerator
