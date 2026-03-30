@@ -12,8 +12,7 @@ from app.routers.auth import router as auth_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     #startup
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Tables are managed by Alembic migrations — run `alembic upgrade head` before starting
     yield
     #shutdown
     await engine.dispose()
