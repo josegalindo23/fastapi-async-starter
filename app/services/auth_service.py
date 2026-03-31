@@ -88,7 +88,7 @@ async def login(db: AsyncSession, credentials: LoginRequest) -> TokenResponse:
 
     # 2. Verify — always run verify_password even if user not found
     #    to prevent timing-based email enumeration
-    dummy_hash = "$2b$12$dummyhashfordummycheckthatwillalwaysfail"
+    dummy_hash = "$2b$12$LKVEIpCpTEHpBpJQmDBuZeZ6AZTqZbcM2UqBd3xBFHBRSP3wxcFNy"
     password_ok = verify_password(
         credentials.password,
         user.hashed_password if user else dummy_hash,

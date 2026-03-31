@@ -6,6 +6,7 @@ Centralized application configuration using Pydantic's BaseSettings.
 - Provides type validation and defaults for all config values
 - Cached for efficient access across the app
 """
+from pydantic import ConfigDict
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 
@@ -28,9 +29,7 @@ class Settings(BaseSettings):
     # CORS
     BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:8000"]
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    model_config = ConfigDict(env_file=".env", case_sensitive=True)
 
 @lru_cache()
 def get_settings() -> Settings:

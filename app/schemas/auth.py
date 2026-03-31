@@ -8,7 +8,7 @@ Pydantic schemas for authentication flows:
 - Password reset request/confirm
 """
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 # Login
 class LoginRequest(BaseModel):
@@ -82,5 +82,4 @@ class MessageResponse(BaseModel):
     """Simple success/info message response."""
     message: str
 
-    class Config:
-        json_schema_extra = {"example": {"message": "Operation completed successfully"}}
+    model_config = ConfigDict(json_schema_extra={"example": {"message": "Operation completed successfully"}})

@@ -14,7 +14,7 @@ class UserRole(str, Enum):
 # Base User Schema
 class UserBase(BaseModel):
     """Base user attributes shared across schemas."""
-    email: EmailStr = Field(..., description="Valid email address", example=["user@example.com"], json_schema_extra={"format": "email"})
+    email: EmailStr = Field(..., description="Valid email address", json_schema_extra={"format": "email", "example": "user@example.com"})
     username: str = Field(..., min_length=3, max_length=50, pattern=r"^[a-zA-Z0-9_-]+$", description="Username (letters, numbers, underscores)", examples=["john_doe", "user123"])
     full_name: Optional[str] = Field(None, max_length=100, description="User's Full Name", examples=["John Doe", "Jane Smith"])
 
@@ -58,7 +58,7 @@ class UserProfileUpdate(BaseModel):
     
 class UserEmailUpdate(BaseModel):
     """Update email address"""
-    email: Optional[EmailStr] = Field(None, description="Valid email address", example=["new_email@example.com"])
+    email: Optional[EmailStr] = Field(None, description="Valid email address", json_schema_extra={"example": "new_email@example.com"})
     current_password: Optional[str] = Field(None, description="Current Password", examples=["currentpassword123"])
 
 class UserPasswordUpdate(BaseModel):
